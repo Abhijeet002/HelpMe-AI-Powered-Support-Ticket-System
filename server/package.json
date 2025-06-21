@@ -1,0 +1,26 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "Helpme- Ticket managemennt",
+  "keywords": [],
+  "homepage": "https://github.com/Abhijeet002/HelpMe-AI-Powered-Support-Ticket-System#readme",
+  "bugs": {
+    "url": "https://github.com/Abhijeet002/HelpMe-AI-Powered-Support-Ticket-System/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abhijeet002/HelpMe-AI-Powered-Support-Ticket-System.git"
+  },
+  "license": "ISC",
+  "author": "Abhijeet Sachan",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10"
+  }
+}
