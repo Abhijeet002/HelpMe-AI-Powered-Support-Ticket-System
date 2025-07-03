@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
+import replyRoutes from './routes/replyRoutes.js';
 import cookieParser from 'cookie-parser';
 
 dotenv.config();
@@ -16,7 +17,8 @@ app.use(express.json());
 connectDB();
 
 app.use('/api/auth', authRoutes);
-app.use('/api/ticket', ticketRoutes);
+app.use('/api/tickets', ticketRoutes);
+app.use('/api/replies', replyRoutes);
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Ticket API');
