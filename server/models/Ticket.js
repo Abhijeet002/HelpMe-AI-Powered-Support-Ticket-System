@@ -31,6 +31,10 @@ const ticketSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    attachment: {
+      url: { type: String }, // File access URL
+      public_id: { type: String }, // For deleting from Cloudinary
+    },
   },
   { timestamps: true }
 );

@@ -20,6 +20,10 @@ const replySchema = new mongoose.Schema(
       type: String,
       enum: ['user', 'agent', 'admin'],
       required: true
+    },
+    attachment: {
+      type: String, // Store the file name or cloud URL
+      default: null
     }
   },
   { timestamps: true }
