@@ -1,39 +1,47 @@
 import { Ticket } from "../models/Ticket.js";
 import { Reply } from "../models/Reply.js";
+import cloudinary from '../config/cloudinary.js';
 
-export const addReply = async (req, res) => {
+export const createReply = async (req, res) => {
   const { ticketId } = req.params;
-  const { id: userId, role } = req.user;
   const { message } = req.body;
-  console.log(req.body);
+
   try {
     const ticket = await Ticket.findById(ticketId);
     if (!ticket) {
-      res.status(404).json({ message: "Ticket not found" });
+      return res.status(404).json({ message: "Ticket not found" });
     }
 
-    // Only allow creator, assigned agent, or admin to reply
-    const isCreator = ticket.createdBy.toString() === userId;
-    const assignedTo = ticket.assignedTo?.toString() === userId;
-    const isAdmin = role === "admin";
+    const isAdmin = req.user.role === "admin";
+    const isCreator = ticket.createdBy.toString() === req.user.id;
+    const isAssignedAgent = ticket.assignedTo?.toString() === req.user.id;
 
-    if (!isCreator && !assignedTo && !isAdmin) {
+    if (!isAdmin && !isCreator && !isAssignedAgent) {
       return res
         .status(403)
         .json({ message: "Unauthorized to reply to this ticket" });
     }
 
-    const reply = new Reply({
+    const newReply = new Reply({
       ticket: ticketId,
-      user: userId,
+      user: req.user.id,
+      senderRole: req.user.role,
       message,
-      senderRole: role,
     });
-    await reply.save();
-    return res.status(201).json({ message: "Reply added successfully", reply });
+
+    if (req.file) {
+      newReply.attachment = {
+        url: req.file.path,
+        public_id: req.file.filename,
+      };
+    }
+    await newReply.save();
+    return res
+      .status(201)
+      .json({ message: "Reply created successfully", reply: newReply });
   } catch (error) {
-    console.error("Error adding reply:", error);
-    return res.status(500).json({ message: "Failed to add reply" });
+    console.error("Error creating reply:", error);
+    return res.status(500).json({ message: "Failed to post reply" });
   }
 };
 
@@ -62,12 +70,9 @@ export const getRepliesForTicket = async (req, res) => {
     const isAgent = ticket.assignedTo?.toString() === userId;
     const isAdmin = role === "admin";
     if (!isCreator && !isAgent && !isAdmin) {
-      return res
-        .status(403)
-        .json({
-          message:
-            "Access denied! Unauthorized to view replies for this ticket",
-        });
+      return res.status(403).json({
+        message: "Access denied! Unauthorized to view replies for this ticket",
+      });
     }
     const replies = await Reply.find({ ticket: ticketId })
       .sort({ createdAt: -1 })
@@ -79,31 +84,47 @@ export const getRepliesForTicket = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Failed to fetch replies for this ticket" });
+    }
+};
+  
+
+export const editReply = async (req, res) => {
+  const { replyId } = req.params;
+  const { message } = req.body;
+  const { id: userId, role } = req.user;
+
+  try {
+    const reply = await Reply.findById(replyId);
+    if (!reply) {
+      return res.status(404).json({ message: "Reply not found" });
+    }
+
+    if (reply.user.toString() !== userId && role !== "admin") {
+      return res.status(403).json({ message: "Unauthorized to edit this reply" });
+    }
+
+    reply.message = message;
+
+    // Replace attachment if new file uploaded
+    if (req.file) {
+      if (reply.attachment?.public_id) {
+        await cloudinary.uploader.destroy(reply.attachment.public_id);
+      }
+
+      reply.attachment = {
+        url: req.file.path,
+        public_id: req.file.filename,
+      };
+    }
+
+    await reply.save();
+    return res.status(200).json({ message: "Reply updated successfully", reply });
+  } catch (error) {
+    console.error("Error updating reply:", error);
+    return res.status(500).json({ message: "Failed to update reply" });
   }
 };
 
-export const editReply = async (req, res) => {
-    const { replyId } = req.params;
-    const { message } = req.body;
-    const { id: userId, role } = req.user;
-
-    try{
-        const reply  = await Reply.findById(replyId);
-        if (!reply) {   
-            return res.status(404).json({ message: "Reply not found" });
-        }
-        // Only allow the user who created the reply or an admin to edit it
-        if (reply.user.toString() !== userId && role !== "admin") {
-            return res.status(403).json({ message: "Unauthorized to edit this reply" });
-        }
-        reply.message = message;
-        await reply.save();
-        return res.status(200).json({ message: "Reply updated successfully", reply });
-    } catch (error) {
-        console.error("Error updating reply:", error);
-        return res.status(500).json({ message: "Failed to update reply" });
-    }
-}
 
 export const deleteReply = async (req, res) => {
   const { replyId } = req.params;
@@ -116,13 +137,18 @@ export const deleteReply = async (req, res) => {
     }
     // Only allow the user who created the reply or an admin to delete it
     if (reply.user.toString() !== userId && role !== "admin") {
-      return res.status(403).json({ message: "Unauthorized to delete this reply" });
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to delete this reply" });
+    }
+
+    if (reply.attachment?.public_id) {
+      await cloudinary.uploader.destroy(reply.attachment.public_id);
     }
     await reply.deleteOne();
     return res.status(200).json({ message: "Reply deleted successfully" });
   } catch (error) {
     console.error("Error deleting reply:", error);
     return res.status(500).json({ message: "Failed to delete reply" });
-    }
-
-}
+  }
+};
