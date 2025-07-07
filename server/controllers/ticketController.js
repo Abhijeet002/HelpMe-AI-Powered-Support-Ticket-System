@@ -151,6 +151,7 @@ export const getAllTickets = async (req, res) => {
     const tickets = await Ticket.find({})
       .sort({ createdAt: -1 }) // newest first
       .populate("createdBy", "username email role"); // enrich with user info
+      .populate("assignedTo", "username email");
 
     return res.status(200).json({ tickets });
   } catch (error) {
