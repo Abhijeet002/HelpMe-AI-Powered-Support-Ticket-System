@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
 import { Reply } from "../models/Reply.js";
 
 dotenv.config();
@@ -21,8 +23,17 @@ export const createTicket = async (req, res) => {
       title,
       description,
       priority,
+      status: "open", // default status
       createdBy: req.user.id,
+      // attachment: req.file?.filename || null,
     });
+    if (req.file) {
+      ticket.attachment = {
+        url: req.file.path, // Cloudinary file URL
+        public_id: req.file.filename, // Used to delete from Cloudinary
+      };
+    }
+
     res.status(201).json({ message: "Ticket created successfully", ticket });
   } catch (error) {
     console.error(error);
@@ -101,10 +112,34 @@ export const updateTicket = async (req, res) => {
     if (!ticket) {
       return res.status(404).json({ message: "Ticket not found" });
     }
+    if (ticket.createdBy.toString() !== req.user.id) {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to update this ticket" });
+    }
 
-    return res
-      .status(200)
-      .json({ message: "Ticket updated successfully", ticket });
+    // Partial updates
+    if (title !== undefined) ticket.title = title;
+    if (description !== undefined) ticket.description = description;
+    if (priority !== undefined) ticket.priority = priority;
+    if (status !== undefined) ticket.status = status;
+
+    // Handle file replacement
+    if (req.file) {
+      // Delete old file from Cloudinary
+      if (ticket.attachment?.public_id) {
+        await cloudinary.uploader.destroy(ticket.attachment.public_id);
+      }
+      ticket.attachment = {
+        url: req.file.path,
+        public_id: req.file.filename,
+      };
+    }
+
+    return res.status(201).json({
+      message: "Ticket updated successfully",
+      ticket: ticket,
+    });
   } catch (error) {
     console.error("Error updating ticket:", error);
     return res.status(500).json({ message: "Failed to update ticket" });
@@ -199,29 +234,34 @@ export const getTicketDashboard = async (req, res) => {
 export const deleteTicket = async (req, res) => {
   const { ticketId } = req.params;
 
-  // Validate ticketId format
-  if (!ticketId || ticketId.trim() === "") {  
-    return res.status(400).json({ message: "Ticket ID is required" });
-  }
-  // Check if ticketId is a valid MongoDB ObjectId
-  // This regex checks if the ticketId is a 24-character hexadecimal string
-  if (!/^[0-9a-fA-F]{24}$/.test(ticketId)) {
-    return res.status(400).json({ message: "Invalid Ticket ID format" });
-  }
-
-  if (!mongoose.Types.ObjectId.isValid(ticketId)) {
-    return res.status(400).json({ message: "Invalid ticket ID" });
-  }
-
   try {
-    const ticket = await Ticket.findByIdAndDelete(ticketId);
+    const ticket = await Ticket.findById(ticketId);
+
     if (!ticket) {
       return res.status(404).json({ message: "Ticket not found" });
     }
+
+    // Only creator and admin can delete the ticket
+    if (
+      ticket.createdBy.toString() !== req.user.id &&
+      req.user.role !== "admin"
+    ) {
+      return res
+        .status(403)
+        .json({ message: "You are not allowed to delete this ticket" });
+    }
+
+    // Delete file from Cloudinary if exists
+    if (ticket.attachment?.public_id) {
+      await cloudinary.uploader.destroy(ticket.attachment.public_id);
+    }
+
+    // Delete the ticket
+    await Ticket.findByIdAndDelete(ticketId);
 
     return res.status(200).json({ message: "Ticket deleted successfully" });
   } catch (error) {
     console.error("Error deleting ticket:", error);
     return res.status(500).json({ message: "Failed to delete ticket" });
   }
-}
+};
