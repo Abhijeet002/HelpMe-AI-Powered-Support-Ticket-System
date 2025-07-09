@@ -266,3 +266,34 @@ export const deleteTicket = async (req, res) => {
     return res.status(500).json({ message: "Failed to delete ticket" });
   }
 };
+
+export const updateTicketStatus= async(req, res) => {
+  const {ticketId} = req.params
+  const {status} = req.body;
+   const validStatuses = ['open', 'in-progress', 'closed'];
+
+   try{
+    if(!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+
+    const ticket= await Ticket.findById(ticketId);
+    if(!ticket) {
+      return res.status(404).json({ message: "Ticket not found" });
+    }
+
+    const isAdmin=req.user.role === 'admin';
+    const isAssignedAgent= req.user.id === ticket.assignedTo?.toString();
+
+     if (!isAdmin && !isAssignedAgent) {
+      return res.status(403).json({ message: "Not authorized to update ticket status" });
+    }
+
+    ticket.status = status;
+    await ticket.save();
+
+   } catch (error) {
+     console.error("Error updating ticket status:", error);
+     return res.status(500).json({ message: "Failed to update ticket status" });
+   }
+}
