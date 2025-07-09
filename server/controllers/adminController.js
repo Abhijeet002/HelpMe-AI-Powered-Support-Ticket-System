@@ -82,14 +82,13 @@ export const getAdminDashboardStatistics = async (req, res) => {
 // Returns ticket count per day for the last 7 days (including today)
 export const getTicketTrends = async (req, res) => {
   try {
-    // Step 1: Prepare the last 7 days (including today)
+    // Prepare the last 7 days (including today)
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - i);
       return date.toISOString().split("T")[0]; // "YYYY-MM-DD"
     }).reverse(); // So dates are in order: Day 1 → Day 7
 
-    // Step 2: Aggregate from MongoDB
     const rawCounts = await Ticket.aggregate([
       {
         $match: {
@@ -114,7 +113,7 @@ export const getTicketTrends = async (req, res) => {
       },
     ]);
 
-    // Step 3: Merge with fixed 7-day range
+    //  Merge with fixed 7-day range
     const trendData = last7Days.map((date) => {
       const match = rawCounts.find((entry) => entry._id === date);
       return {
@@ -125,7 +124,7 @@ export const getTicketTrends = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      days: trendData, // Example: [{ date: "2025-07-01", count: 3 }, ...]
+      days: trendData, // [{ date: "2025-07-01", count: 3 }, ...]
     });
   } catch (error) {
     console.error("Error fetching ticket trends:", error);
