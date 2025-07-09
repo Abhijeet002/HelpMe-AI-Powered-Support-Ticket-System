@@ -9,13 +9,14 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
+      minlength: 6,
     },
     email: {
       type: String,
       required: true,
       unique: true,
-      trim: true,
       lowercase: true,
+      trim: true,
     },
     password: {
       type: String,
@@ -24,13 +25,21 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      required: true,
-      enum: ["user", "admin", "agent"],
+      enum: ["user", "agent", "admin"],
       default: "user",
+    },
+    avatar: {
+      type: String, // Cloudinary URL
+      default: "",
+    },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: "",
     },
   },
   { timestamps: true }
 );
 
 export const User = mongoose.model("User", userSchema);
-
