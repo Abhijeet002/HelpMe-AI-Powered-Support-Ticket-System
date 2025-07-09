@@ -31,7 +31,7 @@ export const getAdminDashboardStatistics = async (req, res) => {
 
     console.log("Ticket Percentages:", ticketPercentages);
 
-    const ticketPerAgent = await Ticket.aggregate([
+    const ticketsPerAgent = await Ticket.aggregate([
       { $match: { assignedTo: { $ne: null } } },
       { $group: { _id: "$assignedTo", count: { $sum: 1 } } },
       {
@@ -49,8 +49,8 @@ export const getAdminDashboardStatistics = async (req, res) => {
         },
       },
     ]);
-    console.log("Tickets per Agent:", ticketPerAgent);
-    // You can also add more statistics as needed
+
+    console.log("Tickets per Agent:", ticketsPerAgent);
     console.log("Admin Dashboard Statistics:", {
       totalTickets,
       openTickets,
@@ -78,3 +78,6 @@ export const getAdminDashboardStatistics = async (req, res) => {
       .json({ message: "Failed to fetch dashboard statistics" });
   }
 };
+
+// Returns ticket count per day for the last 7 days (including today)
+
