@@ -48,7 +48,11 @@ export const getMyTickets = async (req, res) => {
     const tickets = await Ticket.find({ createdBy: req.user.id })
       .sort({ createdAt: -1 }) // newest first
       .populate("createdBy", "name email"); // optional: enrich with user info
-
+    if (!tickets.length) {
+      return res
+        .status(404)
+        .json({ message: "No tickets found for this user" });
+    }
     return res.status(200).json({ tickets });
   } catch (error) {
     console.error(error);
