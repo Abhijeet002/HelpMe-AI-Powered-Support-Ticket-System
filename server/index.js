@@ -6,19 +6,29 @@ import { connectDB } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import replyRoutes from './routes/replyRoutes.js';
+import userRoutes from "./routes/userRoutes.js";
+import adminRoutes from './routes/adminRoutes.js';
 import cookieParser from 'cookie-parser';
+import { globalErrorHandler, notFound } from './middleware/errorHandler.js';
 
 dotenv.config();
 const app = express();
 app.use(cookieParser());
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 connectDB();
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/replies', replyRoutes);
+
+
+app.use('/files', express.static('uploads'));
+
+app.use(notFound);
+app.use(globalErrorHandler);
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Ticket API');
