@@ -1,66 +1,75 @@
-// server/middleware/upload.js
-import multer from 'multer';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
-import cloudinary from '../config/cloudinary.js';
+import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import { v2 as cloudinary } from "cloudinary";
+import path from "path";
 
+
+// Allowed file types
 const allowedMimeTypes = [
-  'image/png',
-  'image/jpeg',
-  'image/jpg',
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "application/pdf",
+  "application/msword", // .doc
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
 ];
 
+// Max file size: 5MB
 const MAX_SIZE = 5 * 1024 * 1024;
 
+// Multer filter for allowed types + avatar-specific logic
+function fileFilter(req, file, cb) {
+  const isAvatarUpload = req.originalUrl.includes("/users/me");
+
+  // Enforce image-only for avatars
+  if (isAvatarUpload && !file.mimetype.startsWith("image/")) {
+    return cb(new Error("Only image files are allowed for profile avatars."));
+  }
+
+  // General file type check
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Unsupported file type."));
+  }
+}
+
+// Cloudinary Storage Config
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const isImage = file.mimetype.startsWith('image/');
-    let folder = 'helpme/replies';
-    if (req.originalUrl.includes('/tickets/create')) {
-      folder = 'helpme/tickets';
+    // Determine target folder
+    let folder = "helpme/misc";
+
+    if (req.originalUrl.includes("/tickets/create")) {
+      folder = "helpme/tickets";
+    } else if (req.originalUrl.includes("/replies")) {
+      folder = "helpme/replies";
+    } else if (req.originalUrl.includes("/users/me")) {
+      folder = "helpme/users/avatars";
     }
+
+    // Determine file extension
+    const ext = path.extname(file.originalname); // e.g., .jpg
+    const userId = req.user?.id || "anon";
+    const timestamp = Date.now();
 
     return {
       folder,
-      resource_type: 'auto',
-      public_id: `${file.fieldname}-${Date.now()}`,
-      transformation: isImage
-        ? [
-            { width: 1024, height: 1024, crop: 'limit' }, // Resizes but keeps aspect ratio
-            { quality: 'auto' },                          // Auto compression
-            { fetch_format: 'auto' }                      // WebP/JPEG/PNG as needed
-          ]
-        : [],
+      public_id: `${file.fieldname}-${userId}-${timestamp}`,
+      format: ext.replace(".", ""), // e.g., "jpg"
+      transformation: [
+        { width: 600, crop: "limit" },
+        { quality: "auto" },
+        { fetch_format: "auto" },
+      ],
     };
   },
 });
 
-function fileFilter(req, file, cb) {
-  if (allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Unsupported file type. Allowed: PNG, JPG, JPEG, PDF, DOC, DOCX'));
-  }
-}
-
+// Multer Upload Middleware
 export const upload = multer({
   storage,
   fileFilter,
   limits: { fileSize: MAX_SIZE },
 });
-
-
-// Middleware to handle file upload errors
-export const handleUploadErrors = (err, req, res, next) => {
-  if (err instanceof multer.MulterError) {
-    // Handle Multer-specific errors
-    return res.status(400).json({ error: err.message });
-  } else if (err) {
-    // Handle other errors
-    return res.status(400).json({ error: err.message });
-  }
-  next();
-};
