@@ -1,3 +1,4 @@
+import ReduxProvider from '@/lib/redux/ReduxProvider'
 import './globals.css'
 import type { Metadata } from 'next'
 import { ReactNode } from 'react'
@@ -12,9 +13,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        {/* <ReduxProvider> */}
+        <ReduxProvider>
           {children}
-        {/* </ReduxProvider> */}
+        </ReduxProvider>
       </body>
     </html>
   )
