@@ -87,7 +87,6 @@ export const getRepliesForTicket = async (req, res) => {
     }
 };
   
-
 export const editReply = async (req, res) => {
   const { replyId } = req.params;
   const { message } = req.body;
@@ -124,7 +123,6 @@ export const editReply = async (req, res) => {
     return res.status(500).json({ message: "Failed to update reply" });
   }
 };
-
 
 export const deleteReply = async (req, res) => {
   const { replyId } = req.params;

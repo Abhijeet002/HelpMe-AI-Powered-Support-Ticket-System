@@ -184,6 +184,7 @@ export const assignTicket = async (req, res) => {
     }
 
     ticket.assignedTo = agentId;
+    ticket.status = "in-progress"; // Automatically set to in-progress when assigned
     await ticket.save();
 
     return res

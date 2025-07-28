@@ -23,7 +23,8 @@ connectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/replies', replyRoutes);
-
+app.use("/api/users", userRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.use('/files', express.static('uploads'));
 

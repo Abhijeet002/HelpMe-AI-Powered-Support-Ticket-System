@@ -35,11 +35,12 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   const { identifier, password } = req.body;
+  // console.log('Incoming req.body:', req.body);
 
   if (!identifier || !password) {
     return res
-      .status(400)
-      .json({ message: "Email/username and password are required" });
+    .status(400)
+    .json({ message: "Email/username and password are required" });
   }
   try {
     const user = await User.findOne({
@@ -65,17 +66,19 @@ export const login = async (req, res) => {
       { expiresIn: "1d" }
     );
     res
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "Strict",
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
-      })
-      .status(200);
+    .cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    })
+    
+    .status(200);
     return res.status(200).json({
       message: "Login successful",
       user: { id: user._id, username: user.username, role: user.role },
     });
+    
   } catch (error) {
     console.error("Error logging in user:", error);
     res.status(500).json({ message: "Login failed due to server error" });

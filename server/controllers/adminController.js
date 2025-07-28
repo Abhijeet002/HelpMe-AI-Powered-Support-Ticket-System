@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { Ticket } from "../models/Ticket.js";
 import { Reply } from "../models/Reply.js";
 
-export const getAdminDashboardStatistics = async (req, res) => {
+export const getAdminDashboardStats = async (req, res) => {
   try {
     const totalTickets = await Ticket.countDocuments();
     const openTickets = await Ticket.countDocuments({ status: "open" });
