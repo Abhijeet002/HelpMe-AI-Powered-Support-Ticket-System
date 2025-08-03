@@ -76,12 +76,13 @@ export const login = async (req, res) => {
     .status(200);
     return res.status(200).json({
       message: "Login successful",
+      token,
       user: { id: user._id, username: user.username, role: user.role },
     });
     
   } catch (error) {
     console.error("Error logging in user:", error);
-    res.status(500).json({ message: "Login failed due to server error" });
+    res.status(500).json({ message: "Login failed due to server error" }); 
   }
 };
 
