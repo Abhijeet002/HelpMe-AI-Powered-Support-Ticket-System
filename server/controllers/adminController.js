@@ -69,7 +69,6 @@ export const getAdminDashboardStats = async (req, res) => {
       inProgressTickets,
       closedTickets,
       ticketsPerAgent,
-      dailyTicketCounts,
     });
   } catch (error) {
     console.error("Error fetching admin dashboard statistics:", error);
@@ -86,7 +85,7 @@ export const getTicketTrends = async (req, res) => {
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - i);
-      return date.toISOString().split("T")[0]; // "YYYY-MM-DD"
+      return date.toISOString().split("T")[0]; // "YYYY-MM-DD" 
     }).reverse(); // So dates are in order: Day 1 → Day 7
 
     const rawCounts = await Ticket.aggregate([
