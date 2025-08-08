@@ -177,7 +177,7 @@ export const assignTicket = async (req, res) => {
     }
 
     const agent = await User.findById(agentId);
-    if (!agent || agent.role !== "agent") {
+    if (!agent || (agent.role !== "agent" && agent.role !== "superadmin")) {
       return res
         .status(400)
         .json({ message: "Invalid agent ID or not an agent" });
@@ -250,7 +250,8 @@ export const deleteTicket = async (req, res) => {
     // Only creator and admin can delete the ticket
     if (
       ticket.createdBy.toString() !== req.user.id &&
-      req.user.role !== "admin"
+      req.user.role !== "admin" &&
+      req.user.role !== "superadmin"
     ) {
       return res
         .status(403)
@@ -287,10 +288,10 @@ export const updateTicketStatus= async(req, res) => {
       return res.status(404).json({ message: "Ticket not found" });
     }
 
-    const isAdmin=req.user.role === 'admin';
-    const isAssignedAgent= req.user.id === ticket.assignedTo?.toString();
+    const isPrivileged = req.user.role === 'admin' || req.user.role === 'superadmin';
+    const isAssignedAgent = req.user.id === ticket.assignedTo?.toString();
 
-     if (!isAdmin && !isAssignedAgent) {
+    if (!isPrivileged && !isAssignedAgent) {
       return res.status(403).json({ message: "Not authorized to update ticket status" });
     }
 
