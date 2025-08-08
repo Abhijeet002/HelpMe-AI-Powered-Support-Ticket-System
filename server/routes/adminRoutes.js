@@ -8,13 +8,13 @@ const router = express.Router();
 router.get(
   "/dashboard",
   verifyToken,
-  roleMiddleware(["admin"]),
+  roleMiddleware(["admin", "superadmin"]),
   getAdminDashboardStats
 );
 router.get(
   "/dashboard/trends",
   verifyToken,
-  roleMiddleware(["admin"]),
+  roleMiddleware(["admin" , "superadmin"]),
   getTicketTrends
 );
 
