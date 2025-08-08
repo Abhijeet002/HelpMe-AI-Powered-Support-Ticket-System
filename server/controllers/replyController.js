@@ -12,11 +12,11 @@ export const createReply = async (req, res) => {
       return res.status(404).json({ message: "Ticket not found" });
     }
 
-    const isAdmin = req.user.role === "admin";
+    const isPrivileged  = req.user.role === "admin" || req.user.role === "superadmin";
     const isCreator = ticket.createdBy.toString() === req.user.id;
     const isAssignedAgent = ticket.assignedTo?.toString() === req.user.id;
 
-    if (!isAdmin && !isCreator && !isAssignedAgent) {
+    if (!isPrivileged && !isCreator && !isAssignedAgent) {
       return res
         .status(403)
         .json({ message: "Unauthorized to reply to this ticket" });
@@ -68,8 +68,8 @@ export const getRepliesForTicket = async (req, res) => {
     // Only allow creator, assigned agent, or admin to view replies
     const isCreator = ticket.createdBy.toString() === userId;
     const isAgent = ticket.assignedTo?.toString() === userId;
-    const isAdmin = role === "admin";
-    if (!isCreator && !isAgent && !isAdmin) {
+    const isPrivileged = role === "admin" || role === "superadmin";
+    if (!isCreator && !isAgent && !isPrivileged) {
       return res.status(403).json({
         message: "Access denied! Unauthorized to view replies for this ticket",
       });
@@ -98,7 +98,7 @@ export const editReply = async (req, res) => {
       return res.status(404).json({ message: "Reply not found" });
     }
 
-    if (reply.user.toString() !== userId && role !== "admin") {
+    if (reply.user.toString() !== userId && role !== "admin" && role !== "superadmin") {
       return res.status(403).json({ message: "Unauthorized to edit this reply" });
     }
 
@@ -134,7 +134,7 @@ export const deleteReply = async (req, res) => {
       return res.status(404).json({ message: "Reply not found" });
     }
     // Only allow the user who created the reply or an admin to delete it
-    if (reply.user.toString() !== userId && role !== "admin") {
+    if (reply.user.toString() !== userId && role !== "admin" && role !== "superadmin") {
       return res
         .status(403)
         .json({ message: "Unauthorized to delete this reply" });
