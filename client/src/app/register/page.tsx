@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { AppDispatch } from '@/lib/redux/store';
-import { loginSuccess } from '@/lib/redux/slices/authSlice';
+import { loginSuccess, loginFailure, loginStart } from '@/lib/redux/slices/authSlice';
 import { setUser } from '@/lib/redux/slices/userSlice';
+import API from '@/lib/api';
 
 export default function RegisterPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -15,10 +16,9 @@ export default function RegisterPage() {
     username: '',
     email: '',
     password: '',
-    role: 'user',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -27,29 +27,20 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    dispatch(loginStart());
 
-    // For now, fake a response. Replace this with a POST request to your backend.
-    const fakeResponse = {
-      token: 'fake-access-token',
-      user: {
-        id: '2', // normally comes from DB
-        username: formData.username,
-        email: formData.email,
-        role: formData.role as 'user' | 'admin' | 'agent',
-      },
-    };
+    try {
+      const res = await API.post('/auth/register', formData);
+      const { token, user } = res.data;
 
-    // Dispatch auth and user info to Redux
-    dispatch(
-      loginSuccess({
-        user: fakeResponse.user,
-        token: fakeResponse.token,
-      })
-    );
+      dispatch(loginSuccess({ user, token }));
+      dispatch(setUser(user));
 
-    dispatch(setUser(fakeResponse.user));
-
-    router.push('/dashboard');
+      router.push('/dashboard');
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
+      dispatch(loginFailure(errorMessage));
+    }
   };
 
   return (
@@ -87,17 +78,6 @@ export default function RegisterPage() {
             className="w-full px-4 py-2 border rounded-lg"
             required
           />
-
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-lg"
-          >
-            <option value="user">User</option>
-            <option value="agent">Agent</option>
-            <option value="admin">Admin</option>
-          </select>
 
           <button
             type="submit"
