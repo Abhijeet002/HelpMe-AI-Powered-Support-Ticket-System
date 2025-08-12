@@ -57,11 +57,11 @@ router.get(
 );
 
 //only admin to access this route
-router.get("/all", verifyToken, roleMiddleware(["admin"]), getAllTickets);
+router.get("/all", verifyToken, roleMiddleware(["admin", "superadmin"]), getAllTickets);
 router.get(
   "/user/:userId",
   verifyToken,
-  roleMiddleware(["admin"]),
+  roleMiddleware(["admin", "superadmin"]),
   getTicketsByUserId
 );
 
@@ -69,7 +69,7 @@ router.get(
 router.patch(
   "/assign/:ticketId",
   verifyToken,
-  roleMiddleware(["admin"]),
+  roleMiddleware(["admin", "superadmin"]),
   assignTicket
 );
 
@@ -80,7 +80,7 @@ router.get("/:ticketId", verifyToken, getTicketById);
 router.delete(
   "/:ticketId",
   verifyToken,
-  roleMiddleware(["user"]),
+  roleMiddleware(["user" , "admin", "superadmin"]),
   deleteTicket
 );
 
