@@ -10,7 +10,7 @@ router.get("/me", verifyToken, getMyProfile);
 router.put("/me", verifyToken, upload.single("avatar"), updateMyProfile);
 
 // (Optional) Admin-only access to any user’s profile
-router.get("/:id", verifyToken, roleMiddleware(["admin"]), getUserById);
+router.get("/:id", verifyToken, roleMiddleware(["admin", "superadmin"]), getUserById);
 
 // (Optional) Admin-only access to all users
 // router.get("/", verifyToken, roleMiddleware(["admin"]), getAllUsers);
