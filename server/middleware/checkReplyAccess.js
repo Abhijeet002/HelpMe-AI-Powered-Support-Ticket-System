@@ -13,9 +13,9 @@ export const checkReplyAccess = async (req, res, next) => {
 
     const isCreator = ticket.createdBy.toString() === userId;
     const isAssignedAgent = ticket.assignedTo?.toString() === userId;
-    const isAdmin = role === 'admin';
+    const isPrivileged = role === 'admin' || role === 'superadmin';
 
-    if (!isCreator && !isAssignedAgent && !isAdmin) {
+    if (!isCreator && !isAssignedAgent && !isPrivileged) {
       return res.status(403).json({ message: "Unauthorized to reply to this ticket" });
     }
 
