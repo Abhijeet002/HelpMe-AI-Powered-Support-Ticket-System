@@ -109,3 +109,32 @@ export const refreshToken = (req, res) => {
     res.status(403).json({ message: "Invalid refresh token" });
   }
 };
+
+export const googleAuthCallback = async (req, res) => {
+  // passport will attach user to req.user
+  try {
+    const user = req.user; // user document from passport verify
+    if (!user) {
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=google_auth_failed`);
+    }
+
+    // generate tokens
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+  
+    // Set refresh token as HttpOnly cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Redirect to frontend success page — frontend will call /auth/refresh to get access token & user
+    return res.redirect(`${process.env.FRONTEND_URL}/auth/google/success`);
+  } catch (err) {
+    console.error("Google auth callback error:", err);
+    return res.redirect(`${process.env.FRONTEND_URL}/login?error=google_auth_failed`);
+  }
+};
