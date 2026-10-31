@@ -1,101 +1,3 @@
-// "use client";
-
-// import { useState } from "react";
-// import { useDispatch } from "react-redux";
-// import { useRouter } from "next/navigation";
-// import { AppDispatch } from "@/lib/redux/store";
-// import {
-//   loginStart,
-//   loginSuccess,
-//   loginFailure,
-// } from "@/lib/redux/slices/authSlice";
-// import { setUser } from "@/lib/redux/slices/userSlice";
-// import API from "@/lib/api";
-
-// export default function LoginPage() {
-//   const dispatch = useDispatch<AppDispatch>();
-//   const router = useRouter();
-
-//   const [formData, setFormData] = useState({
-//     identifier: "",
-//     password: "",
-//   });
-
-//   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     setFormData({
-//       ...formData,
-//       [e.target.name]: e.target.value,
-//     });
-//   };
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-//     dispatch(loginStart());
-
-//     try {
-//       const res = await API.post("/auth/login", formData);
-//       const { token, user } = res.data;
-
-//       dispatch(loginSuccess({ user, token }));
-//       dispatch(setUser(user));
-
-//       router.push("/dashboard");
-//     } catch (err: any) {
-//       const errorMessage =
-//         err.response?.data?.message || "Login failed. Please try again.";
-//       dispatch(loginFailure(errorMessage));
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-//       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-md">
-//         <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
-
-//         <form onSubmit={handleSubmit} className="space-y-4">
-//           <input
-//             type="text"
-//             name="identifier"
-//             placeholder="Username or Email"
-//             value={formData.identifier}
-//             onChange={handleChange}
-//             className="w-full px-4 py-2 border rounded-lg"
-//             required
-//           />
-
-//           <input
-//             type="password"
-//             name="password"
-//             placeholder="Password"
-//             value={formData.password}
-//             onChange={handleChange}
-//             className="w-full px-4 py-2 border rounded-lg"
-//             required
-//           />
-
-//           <button
-//             type="submit"
-//             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-//           >
-//             Login
-//           </button>
-//           <a
-//             href={`${process.env.NEXT_PUBLIC_API_URL}/auth/google`}
-//             className="w-full flex items-center justify-center gap-2 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition"
-//           >
-//             <svg /* Google icon here */ />
-//             Login with Google
-//           </a>
-//         </form>
-//       </div>
-//     </div>
-//   );
-// }
-
-
-
-
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -186,7 +88,8 @@ export default function LoginPage() {
         ...formData,
         rememberMe,
       });
-      const { token, user } = res.data;
+      const token = res.data.accessToken || res.data.token;
+      const user = res.data.user;
 
       dispatch(loginSuccess({ user, token }));
       dispatch(setUser(user));
@@ -215,7 +118,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4 shadow-lg shadow-blue-500/20">
             <svg
               className="w-8 h-8 text-white"
               fill="none"
@@ -226,7 +129,7 @@ export default function LoginPage() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 11-9.75 9.75 9.75 9.75 0 019.75-9.75z"
+                d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 11-9.75 9.75 9.75 0 019.75-9.75z"
               />
             </svg>
           </div>
@@ -397,7 +300,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-blue-500/20"
             >
               {loading ? (
                 <>
@@ -439,7 +342,7 @@ export default function LoginPage() {
 
             {/* Google Login */}
             <a
-              href={`${process.env.NEXT_PUBLIC_API_URL}/auth/google`}
+              href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/google`}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:ring-gray-200 transition-all duration-200 text-gray-700 font-medium"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -479,7 +382,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center space-y-2">
           <p className="text-xs text-gray-500">
             By signing in, you agree to our{" "}
             <Link href="/terms" className="text-blue-600 hover:underline">
@@ -490,6 +393,11 @@ export default function LoginPage() {
               Privacy Policy
             </Link>
           </p>
+          <div>
+            <Link href="/" className="text-xs text-blue-600 hover:underline">
+              ← Back to HelpMe Homepage
+            </Link>
+          </div>
         </div>
       </div>
     </div>
