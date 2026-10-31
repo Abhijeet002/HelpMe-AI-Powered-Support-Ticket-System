@@ -1,38 +1,43 @@
 import axios from 'axios';
 import { logout } from './redux/slices/authSlice';
 import { store } from './redux/store';
-import { log } from 'console';
 
 const API = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL,
-    withCredentials: true, // Include credentials for CORS requests
-})
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  withCredentials: true,
+});
 
 // Request interceptor logic 
 API.interceptors.request.use(
-    (config)=>{
-        const token = store.getState().auth.token;
-        if(token){
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+  (config) => {
+    // Check Redux store token or sessionStorage/localStorage token
+    let token = store.getState().auth.token;
+    if (!token && typeof window !== 'undefined') {
+      token = localStorage.getItem('token') || sessionStorage.getItem('token');
     }
-)
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Response interceptor logic 
 API.interceptors.response.use(
-    (response)=> response,
-    async(error)=>{
-        if(error.response && error.response.status === 401) {
-            store.dispatch(logout());
-        }
-        return Promise.reject(error);
+  (response) => response,
+  async (error) => {
+    if (error.response && error.response.status === 401) {
+      store.dispatch(logout());
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
+      }
     }
-)
-
-// refresh token logic is not implemented here in this we have to add it.
+    return Promise.reject(error);
+  }
+);
 
 export default API;
